@@ -22,8 +22,14 @@ The operational flow of the Support Vector Machine inference engine processes in
 ## Train the SVM offline using LIBSVM
 
 > 📥 *Download LIBSVM from [https://www.csie.ntu.edu.tw/~cjlin/libsvm/](https://www.csie.ntu.edu.tw/~cjlin/libsvm/)*
+>
+> <img width="553" height="59" alt="image" src="https://github.com/user-attachments/assets/d90ebca6-50fe-43ec-bdb5-36e526ee7c49" />
 
 > 📥 *Download the `a1a` dataset from the LIBSVM Data repository*
+
+
+<img width="554" height="232" alt="image" src="https://github.com/user-attachments/assets/fcbc7b6b-536e-4ea3-8de5-66ba075c9470" />
+
 
 **After training:**
 
