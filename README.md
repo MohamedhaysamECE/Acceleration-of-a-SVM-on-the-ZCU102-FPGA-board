@@ -1,11 +1,4 @@
 # Implementation-and-Acceleration-of-a-Support-Vector-Machine-Classifier-on-the-ZCU102-FPGA-Platform
-# Implementation and Acceleration of an SVM on the ZCU102 Board
-## Literature Review: Hardware Acceleration Frameworks
-
-> **Internship Project — Nile University | FPGA-Based HW/SW Co-Design Program**
-> Supervisor: Prof. Ahmed Gomaa Radwan | Duration: July 15 – September 1, 2026
-
----
 
 This project aims to design, implement, and evaluate a hardware-accelerated SVM inference engine on the ZCU102 board. The objective is not only functional correctness but a quantified comparison between a software (CPU) baseline and a hardware-accelerated (FPGA) implementation in terms of execution latency, throughput, resource utilization, and classification accuracy.
 
