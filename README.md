@@ -16,7 +16,7 @@ The operational flow of the Support Vector Machine inference engine processes in
 > **SVM Inference Equation:**
 >
 > `f(x) = sign( Σ αᵢ yᵢ K(xᵢ, x) + b )`
->
+><img width="433" height="103" alt="image" src="https://github.com/user-attachments/assets/3ea30112-2518-42b6-91ee-3dd3a3b73de3" />
 > Where αᵢ are the dual coefficients, yᵢ are class labels, K(·,·) is the kernel function, and b is the bias offset.
 
 ## Train the SVM offline using LIBSVM
