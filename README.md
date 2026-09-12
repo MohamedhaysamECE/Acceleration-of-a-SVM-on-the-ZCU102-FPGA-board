@@ -104,7 +104,7 @@ Since the vast majority of execution time is spent in the inference stage, it be
 8. **Results Transfer & Verification** — Once the FPGA finishes computing, the host reads the output by copying results from the FPGA's DDR memory back to CPU memory. Finally, the host program verifies prediction accuracy and cleans up the execution environment.
 
 <p align="center">
-  <img width="500" alt="Host program execution flow" src="Images/SVM6.png" />
+  <img width="400" alt="Host program execution flow" src="Images/SVM6.png" />
 </p>
 
 ### Vitis Kernel
