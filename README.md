@@ -62,7 +62,7 @@ Training completed after 8,649 iterations.
 ### CPU Baseline Implementation
 
 <p align="center">
-  <img width="700" alt="CPU baseline implementation flow" src="Images/SVM4.png" />
+  <img width="500" alt="CPU baseline implementation flow" src="Images/SVM4.png" />
 </p>
 
 The goal of this phase is to establish a software baseline before hardware acceleration. This baseline provides the reference performance against which the FPGA implementation will be compared.
