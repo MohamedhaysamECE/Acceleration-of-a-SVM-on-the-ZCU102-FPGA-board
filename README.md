@@ -278,13 +278,13 @@ Using the GParted disk management utility, the SD card was formatted and split i
 - Model & dataset files: `a1a.model` and `a1a.t`
 
 <p align="center">
-  <img width="500" alt="Boot partition contents" src="Images/SVM26.png" />
+  <img width="300" alt="Boot partition contents" src="Images/SVM26.png" />
 </p>
 
 **rootfs partition (ext4)** — Extracted from the Xilinx Linux Common Image (`rootfs.tar.gz`), hosting the complete Linux target root filesystem, standard libraries, and XRT (Xilinx Runtime) environment.
 
 <p align="center">
-  <img width="500" alt="Rootfs partition contents" src="Images/SVM27.png" />
+  <img width="600" alt="Rootfs partition contents" src="Images/SVM27.png" />
 </p>
 
 ### 2. Board Configuration and Hardware Setup
