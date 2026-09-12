@@ -4,36 +4,35 @@ This project aims to design, implement, and evaluate a hardware-accelerated SVM 
 
 # SVM Algorithm Review and Design Specification
 In Support Vector Machines, this boundary line is called a hyperplane. The boundary lines parallel to the hyperplane that touch the closest sample points define the margin. The specific sample points touching these boundary lines are called Support Vectors. 
-<img width="433" height="103" alt="image" src="Images/Picture1.png" />
-The goal is to draw a straight line that cleanly divides the blue triangles from the green circles. While many lines could separate these groups, an optimal line leaves the widest possible margin on both sides.
+The goal is to draw a straight line that cleanly divides the blue triangles from the green circles. While many lines could separate these groups, an optimal line leaves the widest possible margin on both sides.<img width="433" height="103" alt="image" src="Images/SVM1.png" />
 > **SVM Inference Equation:**
 >
 <img width="433" height="103" alt="image" src="Images/Picture1.png" />
 > Where αᵢ are the dual coefficients, yᵢ are class labels, K(·,·) is the kernel function, and b is the bias offset.
-
+Analyzed SVM model's operational flow by deeply understanding its core inference equation. As illustrated in the figure, we mapped this mathematical formula into a sequential, five-step execution pipeline to clearly define the exact step-by-step calculations required for the final classification decision.
+><img width="433" height="103" alt="image" src="Images/SVM2.png" />
+> 
 ## Train the SVM offline using LIBSVM
+completed training after 8,649 iterations
+properities 
+Kernal type : linear 
+num. of support vectors : 591
+num. of features = 123
+num. of dual coff : 591
+rho : 1.594468
+<img width="433" height="103" alt="image" src="Images/SVM3.png" />
+# Time Profiling & System Partitioning
+<img width="433" height="103" alt="image" src="Images/SVM8.png" />
+<img width="433" height="103" alt="image" src="Images/SVM9.png" />
+Time Profiling:
+ Evaluates CPU baseline execution to analyze time distribution per function.
+ Locating Computational Bottlenecks: Identifies time-consuming functions (e.g., matrix operations & loops) for acceleration 
+System Partitioning:
+ Software (CPU): Control logic, File I/O, data parsing, and pre/post-processing. 
+ Hardware (FPGA): Compute-heavy mathematical kernels targeting acceleration. 
+## CPU Baseline Implementation
 
-> 📥 *Download LIBSVM from [https://www.csie.ntu.edu.tw/~cjlin/libsvm/](https://www.csie.ntu.edu.tw/~cjlin/libsvm/)*
->
-> <img width="553" height="59" alt="image" src="https://github.com/user-attachments/assets/d90ebca6-50fe-43ec-bdb5-36e526ee7c49" />
-
-> 📥 *Download the `a1a` dataset from the LIBSVM Data repository*
-
-
-<img width="554" height="232" alt="image" src="https://github.com/user-attachments/assets/fcbc7b6b-536e-4ea3-8de5-66ba075c9470" />
-
-
-**After training:**
-
-The SMO optimization algorithm successfully completed training after 8,649 iterations, converging to the optimal decision boundary.
-
-rho = 1.594468 This is the offset (ρ) reported by LIBSVM b=−ρ. 
-
-Total nSV = 591  The trained SVM model contains only 591 Support Vectors. 
-
-> 📸 *Figure: Trained LIBSVM model output showing convergence parameters*
-
-# CPU Baseline Implementation
+<img width="433" height="103" alt="image" src="Images/SVM4.png" />
 
 The goal of this phase is to establish a software baseline before hardware acceleration. This baseline provides the reference performance against which the FPGA implementation will be compared.
 
@@ -46,240 +45,47 @@ Dataset Parsing: Reading and preparing the input test samples.
 Pure Inference: Executing the SVM classification algorithm on the CPU. 
 
 The timing profile clearly indicates that Pure Inference dominates the total execution time, accounting for approximately 88% of the overall pipeline. This is expected because the inference stage performs the computationally intensive SVM operations, including numerous multiply-accumulate (MAC) computations and dot-product calculations between each input sample and all support vectors.
+<img width="433" height="103" alt="image" src="Images/SVM5.png" />
 
 Since the vast majority of the execution time is spent in the inference stage, it becomes the primary performance bottleneck. Therefore, the FPGA implementation focuses on accelerating only the inference engine, where the large amount of parallel computations can be efficiently mapped to hardware. The parsing stages remain on the CPU because they contribute only a small fraction of the total execution time and would provide minimal performance improvement if accelerated.
 
 # Vitis
 
 ## Host Program
+1. Environment Setup & Initialization
+The host program begins by setting up the OpenCL environment (targeting OpenCL 1.2 for Xilinx XRT compatibility). It includes the <CL/cl2.hpp> headers to create the necessary software objects (Platform, Device, Context, and CommandQueue) that will orchestrate communication between the CPU and the FPGA.
 
-### 1. Header Guard
+2. Data Loading & Parsing (Software Phase)
+Running purely on the CPU, the program reads the necessary file artifacts from the current directory. It parses the trained model (a1a.model) and the test dataset (a1a.t) into system RAM, while simultaneously preparing to load the compiled FPGA bitstream (.xclbin).
 
-```
-#pragma once
-```
+3. Memory Alignment & Data Flattening
+To ensure the FPGA's Direct Memory Access (DMA) engine can read data efficiently, the host code optimizes the data layout:
 
-This prevents the file from being included multiple times during compilation. For example, if you #include "host_main.h" twice across different files, this guard ensures you won't trigger **Compilation Errors** (such as redefinition errors).
+Flattening: It converts nested 2D data structures (which are scattered in memory) into contiguous 1D vectors. This allows the hardware to use fast, streaming "Burst Reads."
 
-### 2. OpenCL Version Specification
+Alignment: It uses a custom aligned_allocator to align the starting addresses of this memory to 4096-Byte (4 KB) boundaries, preventing alignment overhead during data transfers.
 
-```
-#define CL_HPP_TARGET_OPENCL_VERSION 120
-```
+4. FPGA Configuration & Hardware Binding
+The host loads the .xclbin bitstream into the runtime memory to configure the FPGA. It then creates a cl::Kernel object to bind a software handle to the specific hardware function (e.g., "svm_kernel_accel").
 
-This macro instructs the compiler to target **OpenCL 1.2**. This is required because the Xilinx RunTime (XRT) inside AMD Vitis is built upon OpenCL 1.2 standards.
+5. Buffer Allocation
+The host allocates cl::Buffer objects. These act as references to designated memory regions inside the FPGA's off-chip DDR memory. By using the CL_MEM_USE_HOST_PTR flag, the host maps the OpenCL buffers directly to the aligned CPU memory pointers, avoiding redundant intermediate memory copies on the CPU side.
 
-### 3. OpenCL C++ Header
+6. Host to FPGA Transfer
+The CPU copies the flattened, aligned dataset and model parameters from the Host RAM over the PCIe bus into the FPGA's global DDR memory.
 
-```
-#include <CL/cl2.hpp>
-```
+7. Kernel Launch & Execution
+The host issues a command to launch the kernel. The FPGA takes over and executes the hardware-accelerated function (the SVM computations) using the data now residing in its DDR memory.
 
-This is the primary Header file. It provides wrapper classes for managing the FPGA hardware, ou do not need to write custom kernel drivers from scratch. AMD/Xilinx provides the high-level **OpenCL C++ API** to orchestrate host-accelerator communication including:
+8. Results Transfer & Verification
+Once the FPGA finishes computing, the host reads the output by copying the results from the FPGA's DDR memory back to the CPU memory. Finally, the host program verifies the accuracy of the predictions and cleans up the execution environment.
+<img width="433" height="103" alt="image" src="Images/SVM6.png" />
 
-| OpenCL Class | Functional Purpose |
-| --- | --- |
-| cl::Platform | Discovers vendor drivers (e.g., verifying Xilinx target platforms). |
-| cl::Device | Identifies connected FPGA target hardware (e.g., AMD ZCU102 or Alveo cards). |
-| cl::Context | Creates a shared execution session connecting Host CPU memory and FPGA resources. |
-| cl::CommandQueue | Serves as an in-order command stream (memory transfers, kernel executions). |
-| cl::Program | Loads the compiled .xclbin bitstream into host runtime memory. |
-| cl::Kernel | Binds a callable handle to the hardware accelerator function inside the FPGA. |
-| cl::Buffer | Allocates and references dedicated memory regions inside off-chip DDR memory. |
+## Vitis Kernal
+Definition: An isolated, compute-intensive function (C/C++) compiled into dedicated FPGA hardware logic.
+HLS Directives (Pragmas): Guiding the Vitis HLS compiler to optimize hardware architecture and parallel execution.
 
-Without this library, you cannot interface with or control the FPGA hardware from host code.
-
-### 4. aligned_allocator (Custom Memory Allocation)
-
-```
-template<typename T>struct aligned_allocator
-```
-
-This concept often confuses developers. Why do we need custom aligned memory allocation?
-
-Consider a standard host array like std::vector<float>. The default dynamic allocator might place memory at arbitrary addresses, such as 0x1003 or 0x2037.
-
-However, the Direct Memory Access (**DMA**) engine on the FPGA requires memory addresses to align to **4096-Byte boundaries** (4 KB pages):
-
-```
-Ideal DMA Alignment:      0x1000, 0x2000, 0x3000
-Unaligned (Sub-optimal):   0x2003, 0x1003
-```
-
-By wrapping posix_memalign(&ptr, 4096, ...) inside a custom vector allocator, the starting address of host memory is guaranteed to be a multiple of 4096. This eliminates alignment overhead and significantly improves DMA transfer performance.
-
-## Part 2: Main Application Workflow (main())
-
-### 1. Path Resolution
-
-```
-getcwd(...)
-```
-
-Prints the current working directory. This helps confirm the operational path at runtime and resolves file-path issues (such as Unable to open model).
-
-### 2. File Artifacts
-
-- binary_container_1.xclbin: The compiled FPGA **Bitstream** binary generated by Vitis.
-- a1a.model: The trained model parameters file.
-- a1a.t: The input test dataset.
-
-### 3. Data Parsing (Software Phase)
-
-```
-parse_libsvm_model(...);
-parse_libsvm_dataset(...);
-```
-
-During this initial phase, the **CPU alone** reads and parses input files into memory. The FPGA is not yet active—this entire stage runs purely in software on the Host processor.
-
-***flatten vector<vector<float>> into a 1D vector***
-
-```
-host_sv_vectors[m * num_features + f]
-```
-
-The outer vector does not store actual values—it holds **pointers** to individual inner vectors allocated dynamically across different RAM locations:
-
-#### Why is this layout bad for FPGA accelerators?
-
-**FPGA hardware does not understand Standard Template Libraries (STL)** or nested pointers.
-
-The FPGA DMA engine expects contiguous physical memory addresses:
-
-so We convert the 2D layout into a contiguous 1D host array (host_sv_vectors)
-
-```
-host_sv_vectors[m * num_features + f]
-```
-
-DDR memory operates most efficiently using **Burst Reads**. Instead of triggering separate non-contiguous read requests across 0x1000, 0x5300, and 0xAB00, a flattened layout allows the AXI Master to issue a single streaming Burst Read starting at address 0x1000.
-
-```
-cl::Kernel krnl_svm(program, "svm_kernel_accel")
-```
-
-An .xclbin container can include multiple hardware kernels (kernel0, kernel1, kernel2).
-
-Loading the bitstream via cl::Program program(...) transfers the compiled hardware image into the execution environment. Writing:
-
-```
-cl::Kernel krnl_svm(program, "svm_kernel_accel");
-```
-
-Explicitly queries the loaded program and establishes a software-side reference handle to the hardware kernel symbol named "svm_kernel_accel". Once bound, you can invoke API calls such as .setArg() and enqueueTask().
-
-**cl::Buffer**
-
- is **not** memory itself; it is an abstract **Object Reference** representing an allocated region inside board-level DDR Memory.
-
-```
-Global DDR Memory Space
-┌──────────────────────────────────┐
-│ Buffer: Samples                  │
-├──────────────────────────────────┤
-│ Buffer: Support Vectors          │
-├──────────────────────────────────┤
-│ Buffer: Coefficients             │
-├──────────────────────────────────┤
-│ Buffer: Predictions              │
-└──────────────────────────────────┘
-```
-
-When you construct cl::Buffer buffer_samples(...), OpenCL registers an address range within global DDR memory.
-
-Data remains in host system RAM (host_samples) until explicitly transferred to these DDR buffer locations using enqueueMigrateMemObjects().
-
-**CL_MEM_USE_HOST_PTR**
-
-By supplying CL_MEM_USE_HOST_PTR, you instruct the XRT runtime to map the memory pointer (host_samples.data()) directly to the OpenCL buffer instance, eliminating unnecessary intermediate host-RAM memory copies.
-
-**Note:** This does not mean the FPGA accesses CPU system RAM directly. The FPGA still reads from off-chip **DDR memory** over the PCIe/AXI bus; CL_MEM_USE_HOST_PTR simply eliminates redundant copies on the host CPU side before DMA migration takes place.
-
-> 📸 *Figure: System execution order — Data parsing (CPU) → Buffer transfer → Kernel execution (FPGA) → Result readback (CPU)*
-
-## Kernal
-
-### HLS INTERFACE
-
-This is the most critical part of the kernel architecture.
-
-#### 1. m_axi (AXI Master)
-
-For example:
-
-```
-#pragma HLS INTERFACE m_axi port=in_samples bundle=gmem0
-```
-
-This represents the data flow:
-
-The kernel directly reads data from DDR memory on its own.
-
-**Why is it called ***Master***?**
-
-Because the **kernel itself initiates** the read/write memory operations (rather than waiting for an external controller).
-
-#### 2. bundle
-
-For example: gmem0
-
-All ports assigned the same bundle name share the same physical AXI port.
-
-In your design:
-
-- Samples = gmem0
-- Predictions = gmem0
-While:
-
-- Support Vectors = gmem1
-This gives Support Vectors a **dedicated, independent memory interface**, which reduces memory contention and port bottlenecks.
-
-#### 3. depth
-
-```
-depth=3807588
-```
-
-This represents the **maximum expected number of elements**.
-
-It does *not* allocate memory itself; rather, it helps the HLS tool estimate interface sizes and optimize hardware during synthesis and simulation
-
-#### 4. max_read_burst_length
-
-```
-max_read_burst_length=256
-```
-
-Instead of performing individual reads cycle-by-cycle:
-
-It performs a **Burst Read** of up to **256 values at once**, significantly boosting memory bandwidth and throughput.
-
-#### 5. s_axilite (AXI-Lite)
-
-```
-#pragma HLS INTERFACE s_axilite
-```
-
-These are **Control Registers**.
-
-The CPU uses this interface to write parameters such as num_samples, num_sv, and rho into control registers before starting the kernel.
-
-The control flow looks like this:
-
-#### 6. local_sv (Local On-Chip Buffer)
-
-```
-custom_data_t local_sv[MAX_SV][MAX_FEATURES];
-```
-
-This is the **most important array** in the entire codebase.
-
-**Why?**
-
-Instead of reading from DDR memory repeatedly during execution, it transfers the Support Vectors **once** from global memory into fast on-chip memory (Block RAM / URAM):
-
-This dramatically reduces memory latency and accelerates computation.
+<img width="433" height="103" alt="image" src="Images/SVM7.png" />
 
 ### Optimization in Kernal
 
@@ -288,10 +94,11 @@ This dramatically reduces memory latency and accelerates computation.
 ```
 #pragma HLS ARRAY_PARTITION
 ```
-
 This is one of the most critical optimizations in HLS.
 
 If you have data stored in memory:
+
+<img width="433" height="103" alt="image" src="Images/SVM10.png" />
 
 #### Without Partitioning
 
@@ -300,6 +107,7 @@ A standard BRAM port can **only read 1 element per clock cycle**.
 #### After applying factor=8
 
 The memory is split into separate banks:
+<img width="433" height="103" alt="image" src="Images/SVM11.png" />
 
 Now, the hardware can **read all 8 Features simultaneously in the exact same clock cycle**.
 
@@ -310,14 +118,18 @@ This is precisely why the **UNROLL factor** works—unrolling hardware logic onl
 #### What is an Iteration?
 
 Consider this loop:
+<img width="433" height="103" alt="image" src="Images/SVM12.png" />
 
 This loop will execute **4 times**.
+<img width="433" height="103" alt="image" src="Images/SVM13.png" />
 
 #### Without Pipelining
 
 Let's assume that each iteration requires **3 Clock cycles** to complete.
 
 The execution will look like this:
+<img width="433" height="103" alt="image" src="Images/SVM14.png" />
+
 
 #### With Pipelining (II = 1)
 
@@ -326,6 +138,8 @@ Here, HLS (High-Level Synthesis) says:
 *"Instead of waiting for an iteration to finish, I will start a new one every single Clock cycle."*
 
 The execution becomes:
+<img width="433" height="103" alt="image" src="Images/SVM15.png" />
+
 
 **Notice what happened:** At **Clock 3**, you have:
 
@@ -350,6 +164,8 @@ In other words, it increases **Throughput**, not **Latency**.
 unroll= Parallelism Inside One Iteration
 
 Consider this loop:
+<img width="433" height="103" alt="image" src="Images/SVM16.png" />
+
 
 We have **8 Features**.
 
@@ -358,6 +174,8 @@ We have **8 Features**.
 There is **only 1 Multiplier**.
 
 So it executes sequentially like this:
+<img width="433" height="103" alt="image" src="Images/SVM17.png" />
+
 
 In other words, it uses the **exact same multiplier 8 times in a row**.
 
@@ -368,6 +186,8 @@ HLS says:
 *"Instead of using 1 multiplier... I will build **8 multipliers** in hardware."*
 
 The circuit becomes:
+<img width="433" height="103" alt="image" src="Images/SVM18.png" />
+
 
 They **all execute in the very same Clock cycle**:
 
@@ -382,6 +202,8 @@ The **outer loop** (EVAL_SV_LOOP) has **PIPELINE** applied to it.
 The **inner loop** (DOT_PRODUCT_LOOP) has **UNROLL** applied to it.
 
 Let’s apply this directly to our code.
+<img width="433" height="103" alt="image" src="Images/SVM19.png" />
+
 
 **Let's assume:**
 
@@ -391,10 +213,13 @@ Let’s apply this directly to our code.
 #### First: UNROLL
 
 #### Without UNROLL (for SV0):
+<img width="433" height="103" alt="image" src="Images/SVM20.png" />
 
 *This means computing a single dot product takes **8 clock cycles**.*
 
 #### With #pragma HLS UNROLL factor=8:
+<img width="433" height="103" alt="image" src="Images/SVM21.png" />
+
 
 *All multiplications are executed together.*
 
@@ -405,10 +230,14 @@ Let’s apply this directly to our code.
 Now that computing each Support Vector is fast, **PIPELINE** comes into play.
 
 #### Without PIPELINE:
+<img width="433" height="103" alt="image" src="Images/SVM22.png" />
+
 
 *SV1** does not start until **SV0** is completely finished.*
 
 #### With #pragma HLS PIPELINE II=1:
+<img width="433" height="103" alt="image" src="Images/SVM23.png" />
+
 
 **Notice:**
 
@@ -421,7 +250,11 @@ Now that computing each Support Vector is fast, **PIPELINE** comes into play.
 
 Now picture it like this:
 
-> 📸 *Figure: Software emulation result on Vitis showing correctness of kernel output before hardware deployment*
+<img width="433" height="103" alt="image" src="Images/SVM24.png" />
+
+## Software Emulation Result on Vitis
+Software Emulation in the Vitis IDE was utilized to verify host-kernel communication and functional correctness before initiating the time-consuming hardware build. Although virtualization overhead yields performance metrics worse than the CPU baseline, this phase is strictly for rapid bug detection and functional validation prior to physical FPGA deployment.
+<img width="433" height="103" alt="image" src="Images/SVM25.png" />
 
 ## Host Integration and Functional Testing
 
@@ -440,8 +273,12 @@ Using the **GParted** disk management utility, the SD card was formatted and spl
 - binary_container_1.xclbin *(FPGA Hardware Bitstream)*
 - svm_model *(Compiled C++ Host Executable)*
 - Model & Dataset files: a1a.model and a1a.t
+- <img width="433" height="103" alt="image" src="Images/SVM26.png" />
+
 
 - **rootfs** Partition (ext4):** Extracted from the Xilinx Linux Common Image (rootfs.tar.gz), hosting the complete Linux target root filesystem, standard libraries, and XRT (Xilinx Runtime) environment.
+- <img width="433" height="103" alt="image" src="Images/SVM27.png" />
+
 
 ### 2. Board Configuration and Hardware Setup
 
@@ -449,6 +286,8 @@ To configure the board for SD Card booting rather than JTAG:
 
 - **DIP Switch Settings (SW6):** The boot mode switches were set to **E-MODE / SD Card Boot** by configuring the DIP switches to **0111** (specifically setting SW6 pins [1:4] to ON-OFF-OFF-OFF).
 - **UART Serial Interface:** Connected the host PC to the board via USB (UART USB0 port). A serial terminal emulator (**GtkTerm**) was launched on the host machine using a standard baud rate of **115200** baud to monitor the Embedded Linux boot sequence and interact with the kernel.
+ - <img width="433" height="103" alt="image" src="Images/SVM28.png" />
+
 
 ### 3. Execution & Verification
 
@@ -462,12 +301,13 @@ The execution verified that the hardware bitstream was successfully loaded into 
 
 # Hardware Results & Inference Speedup
 
+## FPGA Acceleration
+ - <img width="433" height="103" alt="image" src="Images/SVM29.png" />
+
 "Upon deploying the design onto the physical hardware (ZCU102 board), the inference latency was significantly reduced from **56 ms** (software baseline) down to **12 ms**, achieving a ****4.67×** speedup** and demonstrating the efficiency of our FPGA hardware acceleration architecture.
+ - <img width="433" height="103" alt="image" src="Images/SVM30.png" />
 
-Performance Comparison: CPU Baseline vs. Software Emulation vs. FPGA Acceleration
 
-| Metric | CPU Baseline | Software Emulation | FPGA Acceleration |
-| --- | --- | --- | --- |
-| Total Inference Time | 56.326 ms | ~Simulation | **12.249 ms** |
+
 | Throughput | 8,876.88 samples/sec | — | **40,820.89 samples/sec** |
 | Speedup | 1× (baseline) | — | **~4.6× faster** |
