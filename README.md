@@ -48,8 +48,8 @@ Training completed after 8,649 iterations.
 
 <table>
   <tr>
-    <td align="center"><img width="300" alt="Time profiling breakdown" src="Images/SVM8.png" /></td>
-    <td align="center"><img width="300" alt="System partitioning diagram" src="Images/SVM9.png" /></td>
+    <td align="center"><img width="250" alt="Time profiling breakdown" src="Images/SVM8.png" /></td>
+    <td align="center"><img width="250" alt="System partitioning diagram" src="Images/SVM9.png" /></td>
   </tr>
 </table>
 
