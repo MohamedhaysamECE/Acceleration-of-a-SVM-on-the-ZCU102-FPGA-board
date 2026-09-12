@@ -3,8 +3,12 @@
 <style>
 	/* All images render as centered block elements with spacing above/below,
 	   and a clearfix afterwards, so no image ever overlaps surrounding text. */
-	.block-img { display: block; margin: 18px auto; max-width: 900px; width: 100%; height: auto; }
+	.block-img { display: block; margin: 18px auto; max-width: 900px; width: auto; height: auto; }
 	.clear { clear: both; display: block; height: 0; }
+	/* Row wrapper for placing two (or more) images side by side, still centered as a group. */
+	.img-row { display: flex; justify-content: center; align-items: flex-start; gap: 16px; margin: 18px auto; flex-wrap: wrap; }
+	.img-row .block-img { margin: 0; max-width: 440px; width: 100%; }
+	@media (max-width: 700px) { .img-row { flex-direction: column; align-items: center; } }
 </style>
 
 This project aims to design, implement, and evaluate a hardware-accelerated SVM inference engine on the ZCU102 board. The objective is not only functional correctness but a quantified comparison between a software (CPU) baseline and a hardware-accelerated (FPGA) implementation in terms of execution latency, throughput, and classification accuracy.
@@ -49,10 +53,10 @@ Training completed after 8,649 iterations.
 
 ## Time Profiling & System Partitioning
 
-<img class="block-img" alt="Time profiling breakdown" src="Images/SVM8.png" />
-<div class="clear"></div>
-
-<img class="block-img" alt="System partitioning diagram" src="Images/SVM9.png" />
+<div class="img-row">
+	<img class="block-img" alt="Time profiling breakdown" src="Images/SVM8.png" />
+	<img class="block-img" alt="System partitioning diagram" src="Images/SVM9.png" />
+</div>
 <div class="clear"></div>
 
 **Time Profiling:** Evaluates CPU baseline execution to analyze time distribution per function, and locates computational bottlenecks (e.g., matrix operations and loops) as candidates for acceleration.
