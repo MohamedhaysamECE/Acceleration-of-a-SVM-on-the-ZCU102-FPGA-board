@@ -76,7 +76,7 @@ A detailed timing profile was performed by separating execution into three main 
 The timing profile clearly indicates that Pure Inference dominates the total execution time, accounting for approximately 88% of the overall pipeline. This is expected, since the inference stage performs the computationally intensive SVM operations, including numerous multiply-accumulate (MAC) computations and dot-product calculations between each input sample and all support vectors.
 
 <p align="center">
-  <img width="700" alt="Inference stage timing breakdown" src="Images/SVM5.png" />
+  <img width="500" alt="Inference stage timing breakdown" src="Images/SVM5.png" />
 </p>
 
 Since the vast majority of execution time is spent in the inference stage, it becomes the primary performance bottleneck. Therefore, the FPGA implementation focuses on accelerating only the inference engine, where the large amount of parallel computation can be efficiently mapped to hardware. The parsing stages remain on the CPU because they contribute only a small fraction of total execution time and would provide minimal improvement if accelerated.
