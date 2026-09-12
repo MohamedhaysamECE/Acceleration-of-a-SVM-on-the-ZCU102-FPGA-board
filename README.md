@@ -9,7 +9,7 @@ In Support Vector Machines, the boundary line is called a hyperplane. The bounda
 The goal is to draw a straight line that cleanly divides the blue triangles from the green circles. While many lines could separate these groups, an optimal line leaves the widest possible margin on both sides.
 
 <p align="center">
-  <img width="700" alt="SVM decision boundary and margin" src="Images/SVM1.png" />
+  <img width="400" alt="SVM decision boundary and margin" src="Images/SVM1.png" />
 </p>
 
 > **SVM Inference Equation:**
@@ -48,8 +48,8 @@ Training completed after 8,649 iterations.
 
 <table>
   <tr>
-    <td align="center"><img width="440" alt="Time profiling breakdown" src="Images/SVM8.png" /></td>
-    <td align="center"><img width="440" alt="System partitioning diagram" src="Images/SVM9.png" /></td>
+    <td align="center"><img width="300" alt="Time profiling breakdown" src="Images/SVM8.png" /></td>
+    <td align="center"><img width="300" alt="System partitioning diagram" src="Images/SVM9.png" /></td>
   </tr>
 </table>
 
