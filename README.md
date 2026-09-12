@@ -1,19 +1,4 @@
-# Implementation-and-Acceleration-of-a-Support-Vector-Machine-Classifier-on-the-ZCU102-FPGA-Platform
 
-This project aims to design, implement, and evaluate a hardware-accelerated SVM inference engine on the ZCU102 board. The objective is not only functional correctness but a quantified comparison between a software (CPU) baseline and a hardware-accelerated (FPGA) implementation in terms of execution latency, throughput and classification accuracy.
-
-# SVM Algorithm Review and Design Specification
-In Support Vector Machines, this boundary line is called a hyperplane. The boundary lines parallel to the hyperplane that touch the closest sample points define the margin. The specific sample points touching these boundary lines are called Support Vectors. 
-The goal is to draw a straight line that cleanly divides the blue triangles from the green circles. While many lines could separate these groups, an optimal line leaves the widest possible margin on both sides.<img width="433" height="103" alt="image" src="Images/SVM1.png" />
-> **SVM Inference Equation:**
->
-<img width="433" height="103" alt="image" src="Images/Picture1.png" />
-> Where αᵢ are the dual coefficients, yᵢ are class labels, K(·,·) is the kernel function, and b is the bias offset.
-Analyzed SVM model's operational flow by deeply understanding its core inference equation. As illustrated in the figure, we mapped this mathematical formula into a sequential, five-step execution pipeline to clearly define the exact step-by-step calculations required for the final classification decision.
-><img width="433" height="103" alt="image" src="Images/SVM2.png" />
-> 
-## Train the SVM offline using LIBSVM
-completed training after 8,649 iterations
 # Implementation-and-Acceleration-of-a-Support-Vector-Machine-Classifier-on-the-ZCU102-FPGA-Platform
 
 <style>
