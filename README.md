@@ -1,6 +1,6 @@
 # Implementation-and-Acceleration-of-a-Support-Vector-Machine-Classifier-on-the-ZCU102-FPGA-Platform
 
-This project aims to design, implement, and evaluate a hardware-accelerated SVM inference engine on the ZCU102 board. The objective is not only functional correctness but a quantified comparison between a software (CPU) baseline and a hardware-accelerated (FPGA) implementation in terms of execution latency, throughput, resource utilization, and classification accuracy.
+This project aims to design, implement, and evaluate a hardware-accelerated SVM inference engine on the ZCU102 board. The objective is not only functional correctness but a quantified comparison between a software (CPU) baseline and a hardware-accelerated (FPGA) implementation in terms of execution latency, throughput and classification accuracy.
 
 # SVM Algorithm Review and Design Specification
 
