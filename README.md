@@ -317,8 +317,5 @@ The execution verified that the hardware bitstream was successfully loaded into 
 Upon deploying the design onto the physical hardware (ZCU102 board), the inference latency was significantly reduced from **56 ms** (software baseline) down to **12 ms**, achieving a **4.67× speedup** and demonstrating the efficiency of the FPGA hardware acceleration architecture.
 
 <p align="center">
-  <img width="500" alt="Latency and throughput comparison" src="Images/SVM30.png" />
+  <img width="700" alt="Latency and throughput comparison" src="Images/SVM30.png" />
 </p>
-
-| Throughput | 8,876.88 samples/sec | — | **40,820.89 samples/sec** |
-| Speedup | 1× (baseline) | — | **~4.67× faster** |
