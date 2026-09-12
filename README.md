@@ -3,16 +3,9 @@
 This project aims to design, implement, and evaluate a hardware-accelerated SVM inference engine on the ZCU102 board. The objective is not only functional correctness but a quantified comparison between a software (CPU) baseline and a hardware-accelerated (FPGA) implementation in terms of execution latency, throughput and classification accuracy.
 
 # SVM Algorithm Review and Design Specification
-
-Supervised machine learning algorithms learn decision rules from labeled training samples to classify unseen inputs. Formally, consider a dataset **D = {(x₁, y₁), (x₂, y₂), …, (x_N, y_N)}**, where each **xᵢ ∈ ℝᴰ** represents a D-dimensional feature vector and **yᵢ ∈ {−1, +1}** denotes the binary class label. The objective is to construct a mapping function **f: ℝᴰ → {−1, +1}** that accurately predicts class labels for new feature vectors.
-
-The operational flow of the Support Vector Machine inference engine processes input vectors through sequential transformation stages, as outlined below:
-
-- **Input Sample Ingress: **Receives unscaled D-dimensional feature vectors x ∈ ℝᴰ from external sensor streams or DDR host memory buffers.
-- **Feature Scaling Normalization: **Scales individual raw features linearly into a standardized range, typically [−1.0, +1.0], to prevent larger feature scales from biasing distance computations.
-- **Parallel Kernel Evaluation: **Computes inner product transformations K(x_m, x) concurrently across all stored Support Vectors x_m using selected kernel functions.
-- **Weighted Linear Accumulation: **Multiplies calculated kernel values by stored dual coefficients β_m = α_m y_m and sums them alongside the scalar bias offset b.
-- **Class Sign Output Assignment: **Evaluates the sign of the accumulated scalar decision value to output the final binary class prediction +1 or −1.
+In Support Vector Machines, this boundary line is called a hyperplane. The boundary lines parallel to the hyperplane that touch the closest sample points define the margin. The specific sample points touching these boundary lines are called Support Vectors. 
+<img width="433" height="103" alt="image" src="Images/Picture1.png" />
+The goal is to draw a straight line that cleanly divides the blue triangles from the green circles. While many lines could separate these groups, an optimal line leaves the widest possible margin on both sides.
 > **SVM Inference Equation:**
 >
 <img width="433" height="103" alt="image" src="Images/Picture1.png" />
