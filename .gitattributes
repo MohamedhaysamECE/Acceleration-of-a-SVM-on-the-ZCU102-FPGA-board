@@ -1,13 +1,10 @@
-# تجاهل المجلدات التي تحتوي على داتا أو ملفات ثنائية/مضغوطة
 data/** linguist-vendored
 data/** linguist-documentation
 sd_card.zip linguist-vendored
 
-# إلغاء اعتبار أي ملف .t كلغة برمجة وتصنيفه كداتا
 *.t linguist-documentation
 *.t linguist-detectable=false
 
-# تحديد C++ و OpenCL صراحة
 *.cl linguist-language=OpenCL
 *.cpp linguist-language=C++
 *.hpp linguist-language=C++
