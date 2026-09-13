@@ -158,13 +158,13 @@ Now the hardware can read all 8 features simultaneously in the same clock cycle.
 **Without pipelining:** Assume each iteration requires 3 clock cycles to complete:
 
 <p align="center">
-  <img width="250" alt="Execution without pipelining" src="Images/SVM14.png" />
+  <img width="350" alt="Execution without pipelining" src="Images/SVM14.png" />
 </p>
 
 **With pipelining (II = 1):** HLS starts a new iteration every single clock cycle instead of waiting for the previous one to finish:
 
 <p align="center">
-  <img width="250" alt="Execution with pipelining" src="Images/SVM15.png" />
+  <img width="350" alt="Execution with pipelining" src="Images/SVM15.png" />
 </p>
 
 At clock 3, iterations 0, 1, and 2 are all running at the same time, each at a different stage of execution.
@@ -176,7 +176,7 @@ At clock 3, iterations 0, 1, and 2 are all running at the same time, each at a d
 Consider a loop with 8 features:
 
 <p align="center">
-  <img width="250" alt="Loop with 8 features" src="Images/SVM16.png" />
+  <img width="350" alt="Loop with 8 features" src="Images/SVM16.png" />
 </p>
 
 **Without UNROLL:** There is only 1 multiplier, so operations execute sequentially:
@@ -190,7 +190,7 @@ The same multiplier is used 8 times in a row.
 **With `#pragma HLS UNROLL factor=8`:** HLS builds 8 multipliers in hardware instead of 1:
 
 <p align="center">
-  <img width="250" alt="Parallel execution with 8 multipliers" src="Images/SVM18.png" />
+  <img width="350" alt="Parallel execution with 8 multipliers" src="Images/SVM18.png" />
 </p>
 
 All 8 execute in the very same clock cycle.
@@ -216,13 +216,13 @@ Assume:
 Without UNROLL (for SV0), computing a single dot product takes 8 clock cycles:
 
 <p align="center">
-  <img width="250" alt="Dot product without UNROLL" src="Images/SVM20.png" />
+  <img width="350" alt="Dot product without UNROLL" src="Images/SVM20.png" />
 </p>
 
 With `#pragma HLS UNROLL factor=8`, all multiplications execute together:
 
 <p align="center">
-  <img width="250" alt="Dot product with UNROLL factor=8" src="Images/SVM21.png" />
+  <img width="350" alt="Dot product with UNROLL factor=8" src="Images/SVM21.png" />
 </p>
 
 UNROLL sped up the calculation of a single dot product.
@@ -234,7 +234,7 @@ Now that computing each support vector is fast, PIPELINE comes into play.
 Without PIPELINE, SV1 does not start until SV0 is completely finished:
 
 <p align="center">
-  <img width="250" alt="Support vector processing without PIPELINE" src="Images/SVM22.png" />
+  <img width="350" alt="Support vector processing without PIPELINE" src="Images/SVM22.png" />
 </p>
 
 With `#pragma HLS PIPELINE II=1`, SV0 is still executing while SV1 and SV2 have already started:
@@ -248,7 +248,7 @@ PIPELINE allows processing of a new support vector to start every clock cycle.
 **Combining both together:**
 
 <p align="center">
-  <img width="250" alt="Combined UNROLL and PIPELINE optimization" src="Images/SVM24.png" />
+  <img width="350" alt="Combined UNROLL and PIPELINE optimization" src="Images/SVM24.png" />
 </p>
 
 ### Software Emulation Result on Vitis
